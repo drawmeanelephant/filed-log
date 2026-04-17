@@ -43,8 +43,8 @@ body {
 		height: 240px;
 		background: radial-gradient(
 			50% 50% at 50% 50%,
-			rgba(colors.color(orange, 500), 0.2) 0%,
-			rgba(colors.color(orange, 500), 0) 100%
+			rgba(colors.color(teal, 500), 0.2) 0%,
+			rgba(colors.color(teal, 500), 0) 100%
 		);
 		@media (prefers-color-scheme: dark) {
 			background: radial-gradient(
@@ -57,22 +57,22 @@ body {
 }
 
 ::selection {
-	background: colors.color(orange, 200);
+	background: colors.color(teal, 200);
 	@media (prefers-color-scheme: dark) {
-		background: colors.color(orange, 600);
+		background: colors.color(teal, 600);
 	}
 }
 
 a,
 a:visited {
-	color: colors.color(orange, 600);
+	color: colors.color(teal, 600);
 	transition: 0.1s ease;
 	@media (prefers-color-scheme: dark) {
-		color: colors.color(orange, 300);
+		color: colors.color(teal, 300);
 	}
 
 	&:hover {
-		color: colors.color(orange, 500);
+		color: colors.color(teal, 500);
 	}
 }
 
@@ -148,7 +148,7 @@ nav {
 				top: 0.63em;
 				width: 8px;
 				height: 8px;
-				background: linear-gradient(25deg, colors.color(purple, 500), colors.color(orange, 500));
+				background: linear-gradient(25deg, colors.color(teal, 500), colors.color(amber, 500));
 				border-radius: 99px;
 			}
 		}
@@ -223,10 +223,10 @@ nav {
 	color: colors.$white;
 	background: linear-gradient(
 		25deg,
-		colors.color(purple, 800),
-		colors.color(purple, 700),
-		color.mix(colors.color(purple, 500), colors.color(orange, 500)),
-		colors.color(orange, 500)
+		colors.color(teal, 800),
+		colors.color(teal, 700),
+		color.mix(colors.color(teal, 500), colors.color(amber, 500)),
+		colors.color(amber, 500)
 	);
 	border-radius: 8px;
 }

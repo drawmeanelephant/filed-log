@@ -54,4 +54,35 @@ const entries = defineCollection({
 	}),
 });
 
-export const collections = { releases, topics, entries };
+const genericSchema = z.object({
+	title: z.string(),
+	description: z.string(),
+	date: z.coerce.date(),
+});
+
+const blog = defineCollection({
+	loader: glob({ base: './src/content/blog', pattern: '**/*.md' }),
+	schema: genericSchema,
+});
+const showcase = defineCollection({
+	loader: glob({ base: './src/content/showcase', pattern: '**/*.md' }),
+	schema: genericSchema,
+});
+const team = defineCollection({
+	loader: glob({ base: './src/content/team', pattern: '**/*.md' }),
+	schema: genericSchema,
+});
+const careers = defineCollection({
+	loader: glob({ base: './src/content/careers', pattern: '**/*.md' }),
+	schema: genericSchema,
+});
+const docs = defineCollection({
+	loader: glob({ base: './src/content/docs', pattern: '**/*.md' }),
+	schema: genericSchema,
+});
+const guides = defineCollection({
+	loader: glob({ base: './src/content/guides', pattern: '**/*.md' }),
+	schema: genericSchema,
+});
+
+export const collections = { releases, topics, entries, blog, showcase, team, careers, docs, guides };

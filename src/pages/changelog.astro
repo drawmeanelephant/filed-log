@@ -1,0 +1,249 @@
+---
+import { getCollection, render } from 'astro:content';
+import IndexLayout from '../layouts/IndexLayout.astro';
+import Modal from '../components/Modal.astro';
+
+// ── Data ────────────────────────────────────────────────────
+const allTopics = await getCollection('topics');
+const visibleTopics = allTopics
+  .filter((t) => t.data.visible)
+  .sort((a, b) => a.data.title.localeCompare(b.data.title));
+
+const allEntries = await getCollection('entries');
+
+// Pre-render every entry body server-side
+const renderedEntries = await Promise.all(
+  allEntries.map(async (entry) => {
+    const { Content } = await render(entry);
+    return { entry, Content };
+  })
+);
+
+// Group entries by topic slug, sorted date-descending within each group
+function entriesForTopic(topicId: string) {
+  return renderedEntries
+    .filter(({ entry }) => entry.data.topic === topicId)
+    .sort((a, b) => +b.entry.data.date - +a.entry.data.date);
+}
+
+// ── Badge colours per type ───────────────────────────────────
+const typeBadge: Record<string, string> = {
+  feature:     'bg-green-500/20  text-green-300  ring-green-500/30',
+  fix:         'bg-red-500/20    text-red-300    ring-red-500/30',
+  improvement: 'bg-blue-500/20   text-blue-300   ring-blue-500/30',
+  breaking:    'bg-orange-500/20 text-orange-300 ring-orange-500/30',
+};
+---
+
+<IndexLayout title="Changelog">
+  <main class="py-10 px-4 max-w-4xl mx-auto">
+
+    <h1 class="page_title">Changelog</h1>
+    <hr />
+
+    <!--
+      ── Shared Alpine scope ─────────────────────────────────
+      activeId   : id of the entry whose modal is open ('' = none)
+      modalOpen  : drives the Modal open state via a shared ref
+      show*      : filter toggles, all start true
+    -->
+    <div
+      x-data="{
+        activeId: '',
+        modalOpen: false,
+        showFeature:     true,
+        showFix:         true,
+        showImprovement: true,
+        showBreaking:    true,
+        openEntry(id) {
+          this.activeId  = id;
+          this.modalOpen = true;
+        },
+        bodyHtml(id) {
+          const el = document.getElementById('entry-body-' + id);
+          return el ? el.innerHTML : '';
+        }
+      }"
+    >
+
+      <!-- ── Type filter toggles ─────────────────────────── -->
+      <div class="flex flex-wrap gap-2 mb-8">
+        {(['feature', 'fix', 'improvement', 'breaking'] as const).map((type) => (
+          <button
+            type="button"
+            class:list={[
+              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold',
+              'ring-1 ring-inset transition-opacity duration-150 cursor-pointer',
+              typeBadge[type],
+            ]}
+            x-bind:class={`show${type.charAt(0).toUpperCase() + type.slice(1)} ? 'opacity-100' : 'opacity-30'`}
+            x-on:click={`show${type.charAt(0).toUpperCase() + type.slice(1)} = !show${type.charAt(0).toUpperCase() + type.slice(1)}`}
+          >
+            {type}
+          </button>
+        ))}
+      </div>
+
+      <!-- ── Topic sections ──────────────────────────────── -->
+      {visibleTopics.map((topic) => {
+        const rows = entriesForTopic(topic.id);
+        if (rows.length === 0) return null;
+        return (
+          <section class="mb-12">
+            <h2 class="flex items-center gap-2 text-lg font-bold mb-4 text-white">
+              <span aria-hidden="true">{topic.data.icon}</span>
+              {topic.data.title}
+            </h2>
+
+            <ul class="space-y-3 pl-0 list-none">
+              {rows.map(({ entry }) => (
+                <li
+                  x-show={`show${entry.data.type.charAt(0).toUpperCase() + entry.data.type.slice(1)}`}
+                  x-transition
+                  class="flex items-start gap-3"
+                >
+                  <!-- Type badge -->
+                  <span
+                    class:list={[
+                      'mt-0.5 shrink-0 inline-flex items-center rounded-full px-2 py-0.5',
+                      'text-xs font-semibold ring-1 ring-inset',
+                      typeBadge[entry.data.type],
+                    ]}
+                  >
+                    {entry.data.type}
+                  </span>
+
+                  <!-- Entry title / trigger -->
+                  <div class="min-w-0">
+                    <button
+                      type="button"
+                      class="text-left text-sm font-medium text-white hover:text-purple-300 transition-colors duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400 rounded"
+                      x-on:click={`openEntry('${entry.id}')`}
+                    >
+                      {entry.data.title}
+                    </button>
+                    <p class="mt-0.5 text-xs text-gray-400">{entry.data.summary}</p>
+                  </div>
+
+                  <!-- Date -->
+                  <time
+                    datetime={entry.data.date.toISOString()}
+                    class="ml-auto shrink-0 text-xs text-gray-500 font-mono pt-0.5"
+                  >
+                    {entry.data.date.toLocaleDateString('en-us', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </time>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+
+      <!-- ── Modal (single instance, driven by activeId) ─── -->
+      <div
+        x-data="{ open: false }"
+        x-init="$watch('$root.$data?.modalOpen', v => { open = v })"
+      >
+        <!--
+          We bypass Modal.astro's built-in trigger and wire its
+          internal `open` state from the parent scope instead.
+          The cleanest way: render Modal with no triggerLabel,
+          override open via the parent x-data provide/inject pattern.
+
+          Simpler approach that avoids slot hacks: inline the panel
+          directly, mirroring Modal.astro's panel markup exactly.
+        -->
+        <template x-teleport="body">
+          <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-50 flex items-center justify-center"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="changelog-modal-heading"
+            @keydown.escape.window="open = false; $dispatch('changelog-modal-close')"
+            x-cloak
+          >
+            <!-- Backdrop -->
+            <div
+              class="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              @click="open = false"
+              aria-hidden="true"
+            ></div>
+
+            <!-- Panel -->
+            <div
+              x-show="open"
+              x-transition:enter="transition ease-out duration-200"
+              x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+              x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+              x-transition:leave="transition ease-in duration-150"
+              x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+              x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+              x-trap.noscroll.inert="open"
+              class="relative z-10 w-full max-w-2xl mx-4 rounded-2xl
+                     border border-white/10
+                     bg-gray-900/90 backdrop-blur-xl
+                     shadow-2xl shadow-purple-900/20
+                     ring-1 ring-white/5
+                     max-h-[80vh] flex flex-col"
+            >
+              <!-- Header -->
+              <div class="flex items-center justify-between gap-4 border-b border-white/10 px-6 py-4 shrink-0">
+                <div id="changelog-modal-heading" class="text-base font-semibold text-white"
+                  x-text="document.getElementById('entry-title-' + $data.activeId)?.textContent ?? ''"
+                ></div>
+                <button
+                  type="button"
+                  class="rounded-lg p-1.5 text-gray-400 hover:text-white hover:bg-white/10
+                         transition-colors duration-150
+                         focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  @click="open = false"
+                  aria-label="Close modal"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
+                    <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Body: x-html pulls from the hidden pre-rendered div -->
+              <div
+                class="px-6 py-5 text-sm text-gray-300 leading-relaxed overflow-y-auto prose prose-invert prose-sm max-w-none"
+                x-html="bodyHtml(activeId)"
+              ></div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!--
+        ── Hidden pre-rendered entry bodies ──────────────────
+        These are server-rendered at build time; x-html reads
+        their innerHTML at runtime so the modal gets full Markdown.
+      -->
+      <div class="hidden" aria-hidden="true">
+        {renderedEntries.map(({ entry, Content }) => (
+          <>
+            {/* Title anchor for modal header */}
+            <span id={`entry-title-${entry.id}`}>{entry.data.title}</span>
+            {/* Full rendered Markdown body */}
+            <div id={`entry-body-${entry.id}`}>
+              <Content />
+            </div>
+          </>
+        ))}
+      </div>
+
+    </div>{/* end x-data wrapper */}
+  </main>
+</IndexLayout>
