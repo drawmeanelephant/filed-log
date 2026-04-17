@@ -37,4 +37,21 @@ const topics = defineCollection({
 	}),
 });
 
-export const collections = { releases, topics };
+const entries = defineCollection({
+	// Load Markdown files in the src/content/entries directory.
+	loader: glob({ base: './src/content/entries', pattern: '**/*.md' }),
+	schema: z.object({
+		/** Slug of the parent topic (must match a filename in src/content/topics/) */
+		topic: z.string(),
+		/** Publication date — accepts any string/number that Date can parse */
+		date: z.coerce.date(),
+		/** Category of change */
+		type: z.enum(['feature', 'fix', 'improvement', 'breaking']),
+		/** Short headline shown in listings */
+		title: z.string(),
+		/** One-liner teaser displayed in cards / feeds */
+		summary: z.string(),
+	}),
+});
+
+export const collections = { releases, topics, entries };

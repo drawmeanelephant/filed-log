@@ -1,13 +1,13 @@
 ---
 title: "Astro Sourcebook: filed-log"
-generated: "2026-04-17T19:19:38Z"
+generated: "2026-04-17T20:34:26Z"
 project_dir: "/Users/tbuddy/Documents/GitHub/filed-log"
 description: "Full source bundle for LLM consumption. node_modules and public/ excluded."
 ---
 
 # Astro Sourcebook: `filed-log`
 
-> Generated: 2026-04-17T19:19:38Z  
+> Generated: 2026-04-17T20:34:26Z  
 > Project: `/Users/tbuddy/Documents/GitHub/filed-log`
 
 ---
@@ -18,6 +18,8 @@ description: "Full source bundle for LLM consumption. node_modules and public/ e
 astro-book.sh
 astro-sourcebook.md
 astro.config.mjs
+dist
+node_module_list.md
 node_modules
 package-lock.json
 package.json
@@ -864,7 +866,209 @@ const topics = defineCollection({
 	}),
 });
 
-export const collections = { releases, topics };
+const entries = defineCollection({
+	// Load Markdown files in the src/content/entries directory.
+	loader: glob({ base: './src/content/entries', pattern: '**/*.md' }),
+	schema: z.object({
+		/** Slug of the parent topic (must match a filename in src/content/topics/) */
+		topic: z.string(),
+		/** Publication date — accepts any string/number that Date can parse */
+		date: z.coerce.date(),
+		/** Category of change */
+		type: z.enum(['feature', 'fix', 'improvement', 'breaking']),
+		/** Short headline shown in listings */
+		title: z.string(),
+		/** One-liner teaser displayed in cards / feeds */
+		summary: z.string(),
+	}),
+});
+
+export const collections = { releases, topics, entries };
+
+```
+
+
+### `src/content/entries/billing-duplicate-emails-fix.md`
+
+```markdown
+---
+topic: billing
+date: 2026-04-01
+type: fix
+title: Fix duplicate invoice emails
+summary: Resolved a race condition that sent customers the same invoice email twice.
+---
+
+A race condition in the invoice finalization queue caused duplicate delivery of invoice emails when two webhook events fired within the same 200 ms window. The deduplication layer now uses an idempotency key derived from the invoice ID and event timestamp.
+
+### Root cause
+
+The `invoice.finalized` webhook was retried by the payment provider before our acknowledgement timeout elapsed, resulting in two parallel jobs entering the email queue.
+
+### Fix
+
+- Added a composite idempotency key (`invoice_id + event_ts`) to the email queue consumer
+- Extended the webhook acknowledgement window from 3 s to 8 s
+- Added a dead-letter queue for failed dedup lookups
+
+No customer action is required.
+
+```
+
+
+### `src/content/entries/billing-multi-currency.md`
+
+```markdown
+---
+topic: billing
+date: 2026-03-12
+type: feature
+title: Multi-currency support
+summary: Accept payments in 30+ currencies with automatic exchange-rate conversion.
+---
+
+We've rolled out full multi-currency support across the billing pipeline. When a customer checks out, the system now detects their locale and presents prices in their local currency, backed by daily exchange-rate feeds from the ECB.
+
+### What's included
+
+- Automatic locale detection at checkout
+- Real-time exchange-rate sync (updated every 4 hours)
+- Per-invoice currency locking so the rate is fixed at time of purchase
+- Dashboard reporting toggle to view revenue in your base currency or the customer's
+
+### Migration notes
+
+Existing invoices are unaffected. New invoices created after this release will include a `currency` field in the API response. See the [Billing API docs](#) for details.
+
+```
+
+
+### `src/content/entries/editor-faster-preview.md`
+
+```markdown
+---
+topic: editor
+date: 2026-02-20
+type: improvement
+title: Faster Markdown preview rendering
+summary: Markdown preview now renders 3× faster thanks to incremental parsing.
+---
+
+The live Markdown preview pane has been re-architected to use incremental parsing instead of re-rendering the entire document on every keystroke. For documents over 5 000 words, this cuts preview latency from ~120 ms to ~35 ms.
+
+### Technical details
+
+- Switched from full-document `marked` passes to a tree-diffing approach that only re-parses changed blocks
+- Added a lightweight virtual DOM layer between the parser output and the preview iframe
+- Code-fence highlighting is now deferred until the block scrolls into the viewport
+
+### Before / After
+
+| Metric | Before | After |
+|---|---|---|
+| Keypress → preview update (5 k words) | ~120 ms | ~35 ms |
+| Memory usage (10 k words) | 48 MB | 31 MB |
+
+```
+
+
+### `src/content/entries/editor-realtime-collab.md`
+
+```markdown
+---
+topic: editor
+date: 2026-04-10
+type: feature
+title: Collaborative real-time editing
+summary: Multiple team members can now edit the same document simultaneously with live cursors.
+---
+
+Real-time collaborative editing is here. Open any document and share the link — every collaborator gets a live cursor, selection highlighting, and instant sync powered by CRDTs.
+
+### Highlights
+
+- **Live cursors** — see where each collaborator is typing, colour-coded by user
+- **Presence avatars** — a sidebar strip shows who's currently viewing the document
+- **Conflict-free merges** — built on Yjs CRDTs, so edits never overwrite each other
+- **Offline resilience** — changes queue locally and sync when connectivity returns
+
+### Limits
+
+- Maximum 12 concurrent editors per document during the beta period
+- Track-changes mode is not yet compatible with real-time sessions (coming in a future release)
+
+```
+
+
+### `src/content/entries/integrations-slack.md`
+
+```markdown
+---
+topic: integrations
+date: 2026-04-14
+type: feature
+title: Native Slack integration
+summary: Push changelog updates, alerts, and weekly digests directly to Slack channels.
+---
+
+Connect your workspace to Slack in one click and start receiving changelog updates, billing alerts, and weekly digest summaries directly in the channels you choose.
+
+### Setup
+
+1. Navigate to **Settings → Integrations → Slack**
+2. Click **Connect to Slack** and authorise the app
+3. Choose a default channel for notifications
+4. Optionally configure per-topic channel routing
+
+### Notification types
+
+| Type | Description | Default |
+|---|---|---|
+| **New entry** | Fires when a changelog entry is published | ✅ On |
+| **Billing alert** | Payment failures, upcoming renewals | ✅ On |
+| **Weekly digest** | Summary of all changes from the past 7 days | ❌ Off |
+
+### Permissions
+
+The Slack app requests only `chat:write` and `channels:read` scopes. No message history is accessed.
+
+```
+
+
+### `src/content/entries/integrations-webhook-v2.md`
+
+```markdown
+---
+topic: integrations
+date: 2026-03-28
+type: breaking
+title: Webhook payload v2 migration
+summary: Webhook payloads now use the v2 envelope format — v1 is deprecated and will be removed on 2026-06-01.
+---
+
+All outgoing webhook payloads have been upgraded to the **v2 envelope format**. The v1 format is deprecated effective immediately and will stop being sent on **2026-06-01**.
+
+### What changed
+
+| Field | v1 | v2 |
+|---|---|---|
+| Top-level key | `data` | `payload` |
+| Timestamp format | Unix epoch (seconds) | ISO 8601 |
+| Event naming | `snake_case` | `dot.notation` (e.g. `invoice.created`) |
+| Signature header | `X-Webhook-Sig` | `X-Signature-256` (HMAC-SHA256) |
+
+### Migration steps
+
+1. Update your handler to read from `payload` instead of `data`
+2. Parse timestamps as ISO 8601
+3. Update event-name filters to dot notation
+4. Rotate your webhook secret and verify against `X-Signature-256`
+
+### Deprecation timeline
+
+- **Now** — v2 payloads are the default; v1 still sent in parallel
+- **2026-05-01** — v1 payloads marked as legacy in the dashboard
+- **2026-06-01** — v1 payloads permanently disabled
 
 ```
 
