@@ -2,6 +2,7 @@
 import { ClientRouter } from 'astro:transitions';
 import { SiteDescription, SiteTitle } from '../consts';
 import SEO, { type Props as SEOProps } from './SEO.astro';
+import '../styles/global.css';
 
 export type Props = Partial<SEOProps>;
 const { title = SiteTitle, name = SiteTitle, description = SiteDescription, ...seo } = Astro.props;
