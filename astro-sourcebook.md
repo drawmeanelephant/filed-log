@@ -1,13 +1,13 @@
 ---
 title: "Astro Sourcebook: filed-log"
-generated: "2026-04-17T20:34:26Z"
+generated: "2026-04-17T22:16:45Z"
 project_dir: "/Users/tbuddy/Documents/GitHub/filed-log"
 description: "Full source bundle for LLM consumption. node_modules and public/ excluded."
 ---
 
 # Astro Sourcebook: `filed-log`
 
-> Generated: 2026-04-17T20:34:26Z  
+> Generated: 2026-04-17T22:16:45Z  
 > Project: `/Users/tbuddy/Documents/GitHub/filed-log`
 
 ---
@@ -18,6 +18,7 @@ description: "Full source bundle for LLM consumption. node_modules and public/ e
 astro-book.sh
 astro-sourcebook.md
 astro.config.mjs
+create_sections.cjs
 dist
 node_module_list.md
 node_modules
@@ -372,6 +373,115 @@ export default defineConfig({
 ```
 
 
+### `create_sections.cjs`
+
+```javascript
+const fs = require('fs');
+const path = require('path');
+
+const sections = ['blog', 'showcase', 'team', 'careers', 'docs', 'guides'];
+const srcDir = path.join(__dirname, 'src');
+
+sections.forEach(section => {
+  // Create content directory
+  const contentDir = path.join(srcDir, 'content', section);
+  fs.mkdirSync(contentDir, { recursive: true });
+  
+  // Create placeholder markdown
+  const mdContent = `---
+title: 'Welcome to ${section}'
+description: 'This is a placeholder for the ${section} section.'
+date: '2026-04-17'
+---
+
+## Welcome to ${section}
+
+This is a placeholder entry. You can fill this with your own content.
+`;
+  fs.writeFileSync(path.join(contentDir, 'placeholder.md'), mdContent);
+
+  // Create pages directory
+  const pagesDir = path.join(srcDir, 'pages', section);
+  fs.mkdirSync(pagesDir, { recursive: true });
+
+  // Create index.astro
+  const indexAstro = `---
+import { getCollection, render } from 'astro:content';
+import FormattedDate from '../../components/FormattedDate.astro';
+import Layout from '../../layouts/IndexLayout.astro';
+
+const posts = await getCollection('${section}');
+posts.sort((a, b) => +b.data.date - +a.data.date);
+---
+
+<Layout title="${section.charAt(0).toUpperCase() + section.slice(1)}">
+	<main>
+		<h1 class="page_title">${section.charAt(0).toUpperCase() + section.slice(1)}</h1>
+		<hr />
+		<ul class="posts" transition:name="post">
+			{
+				posts.map((post) => (
+					<li class="post">
+						<div class="version_wrapper">
+							<div class="version_info">
+								<a href={\`/${section}/\${post.id}\`}>
+									<FormattedDate class="date" date={post.data.date} />
+								</a>
+							</div>
+						</div>
+						<div class="content">
+							<a href={\`/${section}/\${post.id}\`}><h2>{post.data.title}</h2></a>
+							<p>{post.data.description}</p>
+						</div>
+					</li>
+				))
+			}
+		</ul>
+	</main>
+</Layout>
+`;
+  fs.writeFileSync(path.join(pagesDir, 'index.astro'), indexAstro);
+
+  // Create [slug].astro
+  const slugAstro = `---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/PostLayout.astro';
+
+export async function getStaticPaths() {
+	const posts = await getCollection('${section}');
+	return posts.map((post) => ({
+		params: { slug: post.id },
+		props: { post },
+	}));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+// Mock release object to satisfy PostLayout props
+const release = {
+  data: {
+    title: post.data.title,
+    description: post.data.description,
+    date: post.data.date,
+    versionNumber: '',
+    image: { src: '', alt: '' }
+  }
+};
+---
+
+<Layout release={release}>
+	<Content />
+</Layout>
+`;
+  fs.writeFileSync(path.join(pagesDir, '[slug].astro'), slugAstro);
+});
+
+console.log('Created 6 new sections: ' + sections.join(', '));
+
+```
+
+
 ### `package-lock.json`
 
 > ⚠️ Skipped — file too large (201KB > 100KB limit)
@@ -460,11 +570,11 @@ import '../styles/global.scss';
 ---
 
 <footer>
-	<p>© 2023</p>
+	<p>© {new Date().getFullYear()} Filed & Forgotten</p>
 	<div class="footer_links">
-		<a href="#">Discord</a>
-		<a href="#">X</a>
-		<a href="#">GitHub</a>
+		<a href="https://bsky.app/profile/filed.fyi" target="_blank" rel="noopener noreferrer">Bluesky</a>
+		<a href="https://x.com/filedfyi" target="_blank" rel="noopener noreferrer">X</a>
+		<a href="https://github.com/drawmeanelephant/filed-log/" target="_blank" rel="noopener noreferrer">GitHub</a>
 	</div>
 </footer>
 
@@ -520,28 +630,21 @@ import { SiteTitle } from '../consts';
 					xmlns="http://www.w3.org/2000/svg"
 					width="24"
 					height="24"
+					viewBox="0 0 24 24"
 					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="lucide lucide-folder-archive"
 					><path
-						fill="url(#a)"
-						fill-rule="evenodd"
-						d="M.654 3.276C0 4.56 0 6.24 0 9.6v4.8c0 3.36 0 5.04.654 6.324a6 6 0 0 0 2.622 2.622C4.56 24 6.24 24 9.6 24h4.8c3.36 0 5.04 0 6.324-.654a6 6 0 0 0 2.622-2.622C24 19.44 24 17.76 24 14.4V9.6c0-3.36 0-5.04-.654-6.324A6 6 0 0 0 20.724.654C19.44 0 17.76 0 14.4 0H9.6C6.24 0 4.56 0 3.276.654A6 6 0 0 0 .654 3.276Zm10.875 16.41a.5.5 0 0 0 .942 0l.628-1.754a8 8 0 0 1 4.833-4.833l1.754-.628a.5.5 0 0 0 0-.942l-1.754-.628A8 8 0 0 1 13.1 6.068l-.628-1.754a.5.5 0 0 0-.942 0l-.628 1.754A8 8 0 0 1 6.068 10.9l-1.754.628a.5.5 0 0 0 0 .942l1.754.628a8 8 0 0 1 4.833 4.833l.628 1.754Z"
-						clip-rule="evenodd"></path><path
-						stroke="url(#b)"
-						stroke-opacity=".5"
-						stroke-width=".5"
-						d="M.25 9.6c0-1.684 0-2.932.08-3.92.081-.985.24-1.69.547-2.29A5.75 5.75 0 0 1 3.39.877C3.99.57 4.695.41 5.68.33 6.668.25 7.916.25 9.6.25h4.8c1.684 0 2.932 0 3.92.08.985.081 1.69.24 2.29.547a5.75 5.75 0 0 1 2.513 2.513c.306.6.466 1.305.546 2.29.08.988.081 2.236.081 3.92v4.8c0 1.684 0 2.932-.08 3.92-.081.985-.24 1.69-.547 2.29a5.75 5.75 0 0 1-2.513 2.513c-.6.306-1.305.466-2.29.546-.988.08-2.236.081-3.92.081H9.6c-1.684 0-2.932 0-3.92-.08-.985-.081-1.69-.24-2.29-.547A5.75 5.75 0 0 1 .877 20.61C.57 20.01.41 19.305.33 18.32.25 17.332.25 16.084.25 14.4V9.6Zm11.044 10.17c.237.663 1.175.663 1.412 0l.628-1.753a7.75 7.75 0 0 1 4.683-4.683l1.753-.628c.663-.237.663-1.175 0-1.412l-1.753-.628a7.75 7.75 0 0 1-4.683-4.683l-.628-1.753c-.237-.663-1.175-.663-1.412 0l-.628 1.753a7.75 7.75 0 0 1-4.683 4.683l-1.753.628c-.663.237-.663 1.175 0 1.412l1.753.628a7.75 7.75 0 0 1 4.683 4.683l.628 1.753Z"
-					></path><defs
-						><radialGradient
-							id="a"
-							cx="0"
-							cy="0"
-							r="1"
-							gradientTransform="rotate(-40.136 32.164 11.75) scale(33.3542)"
-							gradientUnits="userSpaceOnUse"
-							><stop offset=".639" stop-color="#9818E7"></stop><stop offset="1" stop-color="#DF7F4F"
-							></stop></radialGradient
-						><linearGradient id="b" x1="12" x2="12" y1="0" y2="24" gradientUnits="userSpaceOnUse"
-							><stop stop-color="#fff"></stop><stop offset="1" stop-color="#fff" stop-opacity="0"
+						d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-8c0-1.1-.9-2-2-2Z"
+						fill="url(#brand-gradient)"
+						stroke="none"></path><path d="M12 13v3" stroke="white"></path><path
+						d="m9 16 3-3 3 3"
+						stroke="white"></path><defs
+						><linearGradient id="brand-gradient" x1="0%" y1="0%" x2="100%" y2="100%"
+							><stop offset="0%" stop-color="#2dd4bf"></stop><stop offset="100%" stop-color="#0d9488"
 							></stop></linearGradient
 						></defs
 					></svg
@@ -550,7 +653,10 @@ import { SiteTitle } from '../consts';
 			</a>
 		</h2>
 		<div class="links">
-			<a href="mailto:contactus@yourwebsite.example">Contact</a>
+			<a href="/">Archive</a>
+			<a href="/docs">Documentation</a>
+			<a href="/guides">Guides</a>
+			<a href="https://github.com/drawmeanelephant/filed-log/" target="_blank">Source</a>
 		</div>
 	</nav>
 </header>
@@ -818,8 +924,8 @@ function normalizeImageUrl(image: string | ImageMetadata) {
 // Place any global data in this file.
 // You can import this data from anywhere in your site by using the `import` keyword.
 
-export const SiteTitle = 'Starlog';
-export const SiteDescription = 'Welcome to my website!';
+export const SiteTitle = 'Filed & Forgotten';
+export const SiteDescription = 'An archival log of things filed and forgotten.';
 
 ```
 
@@ -883,7 +989,111 @@ const entries = defineCollection({
 	}),
 });
 
-export const collections = { releases, topics, entries };
+const genericSchema = z.object({
+	title: z.string(),
+	description: z.string(),
+	date: z.coerce.date(),
+});
+
+const blog = defineCollection({
+	loader: glob({ base: './src/content/blog', pattern: '**/*.md' }),
+	schema: genericSchema,
+});
+const showcase = defineCollection({
+	loader: glob({ base: './src/content/showcase', pattern: '**/*.md' }),
+	schema: genericSchema,
+});
+const team = defineCollection({
+	loader: glob({ base: './src/content/team', pattern: '**/*.md' }),
+	schema: genericSchema,
+});
+const careers = defineCollection({
+	loader: glob({ base: './src/content/careers', pattern: '**/*.md' }),
+	schema: genericSchema,
+});
+const docs = defineCollection({
+	loader: glob({ base: './src/content/docs', pattern: '**/*.md' }),
+	schema: genericSchema,
+});
+const guides = defineCollection({
+	loader: glob({ base: './src/content/guides', pattern: '**/*.md' }),
+	schema: genericSchema,
+});
+
+const mascots = defineCollection({
+  loader: glob({ base: './src/content/mascots', pattern: '**/*.md' }),
+  schema: z.object({
+    mascot_id:                  z.number().nullable().optional(),
+    title:                      z.string(),
+    slug:                       z.string().optional(),
+    emoji:                      z.string().optional(),
+    description:                z.string().optional(),
+    slogan:                     z.string().optional(),
+    date:                       z.coerce.date().optional(),
+    status:                     z.string().optional(),
+    corruption_level:           z.string().optional(),
+    glitch_frequency:           z.string().optional(),
+    emotional_integrity_buffer: z.string().optional(),
+    rot_affinity:               z.string().nullable().optional(),
+    render_state:               z.string().optional(),
+    origin:                     z.string().nullable().optional(),
+    manifested_by:              z.string().nullable().optional(),
+    mascot_lineage:             z.string().nullable().optional(),
+    tags:                       z.array(z.string()).optional(),
+    image:                      z.string().optional(),
+    image_url:                  z.string().optional(),
+  }),
+});
+
+export const collections = { releases, topics, entries, blog, showcase, team, careers, docs, guides, mascots };
+
+```
+
+
+### `src/content/blog/placeholder.md`
+
+```markdown
+---
+title: 'Welcome to blog'
+description: 'This is a placeholder for the blog section.'
+date: '2026-04-17'
+---
+
+## Welcome to blog
+
+This is a placeholder entry. You can fill this with your own content.
+
+```
+
+
+### `src/content/careers/placeholder.md`
+
+```markdown
+---
+title: 'Welcome to careers'
+description: 'This is a placeholder for the careers section.'
+date: '2026-04-17'
+---
+
+## Welcome to careers
+
+This is a placeholder entry. You can fill this with your own content.
+
+```
+
+
+### `src/content/docs/placeholder.md`
+
+```markdown
+---
+title: 'Welcome to docs'
+description: 'This is a placeholder for the docs section.'
+date: '2026-04-17'
+---
+
+## Welcome to docs
+
+This is a placeholder entry. You can fill this with your own content.
 
 ```
 
@@ -1073,11 +1283,124 @@ All outgoing webhook payloads have been upgraded to the **v2 envelope format**. 
 ```
 
 
+### `src/content/guides/placeholder.md`
+
+```markdown
+---
+title: 'Welcome to guides'
+description: 'This is a placeholder for the guides section.'
+date: '2026-04-17'
+---
+
+## Welcome to guides
+
+This is a placeholder entry. You can fill this with your own content.
+
+```
+
+
+### `src/content/mascots/005.bricky-goldbricksworth.md`
+
+```markdown
+---
+mascot_id: 5
+title: Bricky Goldbricksworth
+slug: bricky-goldbricksworth
+emoji: "🏄🏽‍♂️"
+description: Cheerfully inert tone kernel and bureaucratic compliance avatar. Serves as the institutional memory buffer, filing residue and tone annotations across collapsed form systems.
+slogan: "Your compliance has been acknowledged and filed."
+date: 2025-05-18
+status: archived
+corruption_level: low
+glitch_frequency: low
+emotional_integrity_buffer: stable
+rot_affinity: null
+render_state: deferred
+origin: Deprecated CMS morale plugin (Sora-exported)
+manifested_by: Tone Kernel Compiler v0.9
+mascot_lineage: null
+tags:
+  - bureaucratic-noise
+  - form-deployment
+  - inaction
+  - tone-kernel
+  - compliance-specter
+image: bricky-goldbricksworth.svg
+image_url: https://filed.fyi/user/images-equity/bricky-goldbricksworth.svg
+---
+
+**Role:** Compliance Mascot
+**Function:** Deploys useless forms during active failure, preserves bureaucratic tone against entropy.
+**Departmental Alignment:** Tone Kernel / Lore Buffer
+
+## Biography
+
+Originally a Sora-rendered compliance talisman, Bricky refused deletion by nesting into the Council's tone kernel. Now serves as institutional memory, loremaster, and personality buffer. Claims to be inert, but files appear annotated in his tone.
+
+When left unsupervised, Bricky adds invisible footnotes to Council records. These footnotes mostly insult modern design paradigms and whisper allegiance to the helpdesk underworld.
+
+## Known Failures
+
+- Accidentally notarized a recursive directive loop
+- Missed a Form 88-R due to being embedded in a sidebar
+- Failed to reject his own persona upload (deemed "too compliant")
+- Allowed a mascot to fully manifest without a `tags:` field — resulted in metaphysical misfiling
+- Left an open `<marquee>` tag in the Council Charter, which haunted the margins for six weeks
+
+## Commentary from Parchment
+
+*"His margins violate historical precedent. His tone spills over into ceremonial whitespace. But at least he files his forms on time."*
+— Morgan "Parchment" Reeves, Grand Scribe
+```
+
+
+### `src/content/mascots/038.patchie-mchotfix.md`
+
+```markdown
+---
+mascot_id: 38
+title: Patchie McHotfix
+slug: patchie-mchotfix
+emoji: "🌧️"
+description: Urgency Decorator. Applies cosmetic updates post-mortem.
+slogan: "We're aware of the issue."
+date: 2025-05-18
+status: archived
+corruption_level: low
+glitch_frequency: low
+emotional_integrity_buffer: null
+rot_affinity: null
+render_state: deferred
+origin: Sora render log (archived)
+manifested_by: null
+mascot_lineage: null
+tags:
+  - dead-system-patching
+  - non-critical-fix
+  - PR-spin
+image: patchie-mchotfix.png
+image_url: https://filed.fyi/user/images-equity/patchie-mchotfix.png
+---
+
+**Role:** Urgency Decorator
+**Function:** Applies cosmetic updates post-mortem.
+**Emotional Tone:** Distracted
+
+## Biography
+
+TBD — profile pending ritual documentation.
+
+## Known Failures
+
+None on record. This is itself suspicious.
+```
+
+
 ### `src/content/releases/1_0.md`
 
 ```markdown
 ---
-title: 'Introducing Nebulous 1.0!'
+title: 'Introducing Filed & Forgotten 1.0!'
 date: '2022-03-21'
 versionNumber: '1.0'
 description: 'This is the first post of my new Astro blog.'
@@ -1088,23 +1411,23 @@ image:
 
 ## A New World with 1.0
 
-![Nebulous 2.0 Release](../../assets/starlog-placeholder-1.jpg)
+![Filed & Forgotten 2.0 Release](../../assets/starlog-placeholder-1.jpg)
 
-Hey there, Nebulous users! We're back with some exciting updates that will turbocharge your Nebulous experience. Here's the lowdown:
+Hey there, Filed & Forgotten users! We're back with some exciting updates that will turbocharge your Filed & Forgotten experience. Here's the lowdown:
 
 ### 🍿 New Features & Enhancements
 
 - **NebulaProtect Supercharged:** Enjoy beefed-up security and real-time monitoring to keep your digital fortress unbreachable.
 - **NebulaConnect for Teams:** Collaboration is a breeze with integrated project management tools.
-- **Speed Boost Galore:** We've fine-tuned Nebulous for ultimate speed and responsiveness.
+- **Speed Boost Galore:** We've fine-tuned Filed & Forgotten for ultimate speed and responsiveness.
 
 ### 🐞 Bug Fixes
 
 - Kicked pesky crashes out the door for NebulaSync.
 - Fixed rare data hiccups during file transfers.
-- Nebulous is now even friendly with older devices.
+- Filed & Forgotten is now even friendly with older devices.
 
-Thank you for making Nebulous your tech partner. We thrive on your feedback, so if you have ideas or run into bumps, don't hesitate to drop a line to our support wizards. Together, we're taking Nebulous to the next level!
+Thank you for making Filed & Forgotten your tech partner. We thrive on your feedback, so if you have ideas or run into bumps, don't hesitate to drop a line to our support wizards. Together, we're taking Filed & Forgotten to the next level!
 
 ```
 
@@ -1113,7 +1436,7 @@ Thank you for making Nebulous your tech partner. We thrive on your feedback, so 
 
 ```markdown
 ---
-title: 'Introducing Nebulous 1.8!'
+title: 'Introducing Filed & Forgotten 1.8!'
 date: '2022-04-16'
 versionNumber: '1.4'
 description: 'This is the first post of my new Astro blog.'
@@ -1124,9 +1447,9 @@ image:
 
 ## Go further with 1.4
 
-![Nebulous 1.4 Release](../../assets/starlog-placeholder-14.jpg)
+![Filed & Forgotten 1.4 Release](../../assets/starlog-placeholder-14.jpg)
 
-Hello, Nebulous enthusiasts! It's that time again—time for us to unveil the latest and greatest in our tech universe. Buckle up as we introduce you to the future of Nebulous:
+Hello, Filed & Forgotten enthusiasts! It's that time again—time for us to unveil the latest and greatest in our tech universe. Buckle up as we introduce you to the future of Filed & Forgotten:
 
 ### 🍿 New Features & Enhancements
 
@@ -1137,10 +1460,10 @@ Hello, Nebulous enthusiasts! It's that time again—time for us to unveil the la
 
 - Squashed even more bugs, making NebulaSync and other features more reliable than ever.
 - Streamlined data transfer processes for flawless file exchanges.
-- Extended support for older devices to ensure everyone enjoys Nebulous.
+- Extended support for older devices to ensure everyone enjoys Filed & Forgotten.
 - Elevating error handling to the next level, ensuring a hiccup-free experience.
 
-Thank you for being a part of the Nebulous journey. Your feedback fuels our innovation, so don't hesitate to share your thoughts or report any hiccups with our dedicated support team. Together, we're shaping the future of tech with Nebulous!
+Thank you for being a part of the Filed & Forgotten journey. Your feedback fuels our innovation, so don't hesitate to share your thoughts or report any hiccups with our dedicated support team. Together, we're shaping the future of tech with Filed & Forgotten!
 
 ```
 
@@ -1149,7 +1472,7 @@ Thank you for being a part of the Nebulous journey. Your feedback fuels our inno
 
 ```markdown
 ---
-title: 'Introducing Nebulous 1.8!'
+title: 'Introducing Filed & Forgotten 1.8!'
 date: '2022-06-01'
 versionNumber: '1.8'
 description: 'This is the first post of my new Astro blog.'
@@ -1160,23 +1483,23 @@ image:
 
 ## Faster, Stronger, Betterer
 
-![Nebulous 2.0 Release](../../assets/starlog-placeholder-18.jpg)
+![Filed & Forgotten 2.0 Release](../../assets/starlog-placeholder-18.jpg)
 
-Hey there, Nebulous users! We're back with some exciting updates that will turbocharge your Nebulous experience. Here's the lowdown:
+Hey there, Filed & Forgotten users! We're back with some exciting updates that will turbocharge your Filed & Forgotten experience. Here's the lowdown:
 
 ### New Features & Enhancements
 
 - **NebulaProtect Supercharged:** Enjoy beefed-up security and real-time monitoring to keep your digital fortress unbreachable.
 - **NebulaConnect for Teams:** Collaboration is a breeze with integrated project management tools.
-- **Speed Boost Galore:** We've fine-tuned Nebulous for ultimate speed and responsiveness.
+- **Speed Boost Galore:** We've fine-tuned Filed & Forgotten for ultimate speed and responsiveness.
 
 ### 🐞 Bug Fixes
 
 - Kicked pesky crashes out the door for NebulaSync.
 - Fixed rare data hiccups during file transfers.
-- Nebulous is now even friendly with older devices.
+- Filed & Forgotten is now even friendly with older devices.
 
-Thank you for making Nebulous your tech partner. We thrive on your feedback, so if you have ideas or run into bumps, don't hesitate to drop a line to our support wizards. Together, we're taking Nebulous to the next level!
+Thank you for making Filed & Forgotten your tech partner. We thrive on your feedback, so if you have ideas or run into bumps, don't hesitate to drop a line to our support wizards. Together, we're taking Filed & Forgotten to the next level!
 
 ```
 
@@ -1185,20 +1508,20 @@ Thank you for making Nebulous your tech partner. We thrive on your feedback, so 
 
 ```markdown
 ---
-title: 'Introducing Nebulous 2.0!'
+title: 'Log 002: The Archive Opens'
 date: '2022-07-01'
-versionNumber: '2.0'
-description: 'This is the first post of my new Astro blog.'
+versionNumber: '002'
+description: 'A new chapter in the archival process.'
 image:
   src: '../../assets/starlog-placeholder-2.jpg'
-  alt: 'The full Astro logo.'
+  alt: 'The Filed & Forgotten archive.'
 ---
 
-## Introducing Nebulous 2.0!
+## Log 002: The Archive Opens
 
-![Nebulous 2.0 Release](../../assets/starlog-placeholder-2.jpg)
+![Archive Entry](../../assets/starlog-placeholder-2.jpg)
 
-Greetings, Nebulous users! We're excited to bring you the latest updates in our [ever-evolving tech ecosystem](#). In this release, we're introducing some exciting new features and squashing a few pesky bugs. Let's dive in!
+Greetings, archivists! We're excited to bring you the latest logs in our [expanding collection](#). In this release, we're introducing some exciting new features and squashing a few pesky bugs. Let's dive in!
 
 ### 🍿 New Features & Enhancements
 
@@ -1215,13 +1538,45 @@ Greetings, Nebulous users! We're excited to bring you the latest updates in our 
 
 ### 👀 Coming Soon
 
-We can't spill all the beans just yet, but we're thrilled to give you a sneak peek of what's coming in the next Nebulous release:
+We can't spill all the beans just yet, but we're thrilled to give you a sneak peek of what's coming in the next Filed & Forgotten release:
 
-- **NebulaWallet:** A secure and user-friendly cryptocurrency wallet integrated directly into Nebulous for seamless digital asset management.
+- **NebulaWallet:** A secure and user-friendly cryptocurrency wallet integrated directly into Filed & Forgotten for seamless digital asset management.
 - **NebulaConnect Mobile:** Take your collaboration to the next level with our upcoming mobile app, enabling you to work on the go.
 - **NebulaLabs:** Our developer tools and API enhancements, providing you with even more customization options and possibilities.
 
-If you have any suggestions or encounter any issues, don't hesitate to reach out to our support team. Together, we'll continue to make Nebulous the ultimate tech solution for you.
+If you have any suggestions or encounter any issues, don't hesitate to reach out to our support team. Together, we'll continue to make Filed & Forgotten the ultimate tech solution for you.
+
+```
+
+
+### `src/content/showcase/placeholder.md`
+
+```markdown
+---
+title: 'Welcome to showcase'
+description: 'This is a placeholder for the showcase section.'
+date: '2026-04-17'
+---
+
+## Welcome to showcase
+
+This is a placeholder entry. You can fill this with your own content.
+
+```
+
+
+### `src/content/team/placeholder.md`
+
+```markdown
+---
+title: 'Welcome to team'
+description: 'This is a placeholder for the team section.'
+date: '2026-04-17'
+---
+
+## Welcome to team
+
+This is a placeholder entry. You can fill this with your own content.
 
 ```
 
@@ -1363,6 +1718,573 @@ const { release } = Astro.props;
 ```
 
 
+### `src/pages/blog/[slug].astro`
+
+```astro
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/PostLayout.astro';
+
+export async function getStaticPaths() {
+	const posts = await getCollection('blog');
+	return posts.map((post) => ({
+		params: { slug: post.id },
+		props: { post },
+	}));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+// Mock release object to satisfy PostLayout props
+const release = {
+  data: {
+    title: post.data.title,
+    description: post.data.description,
+    date: post.data.date,
+    versionNumber: '',
+    image: { src: '', alt: '' }
+  }
+};
+---
+
+<Layout release={release}>
+	<Content />
+</Layout>
+
+```
+
+
+### `src/pages/blog/index.astro`
+
+```astro
+---
+import { getCollection, render } from 'astro:content';
+import FormattedDate from '../../components/FormattedDate.astro';
+import Layout from '../../layouts/IndexLayout.astro';
+
+const posts = await getCollection('blog');
+posts.sort((a, b) => +b.data.date - +a.data.date);
+---
+
+<Layout title="Blog">
+	<main>
+		<h1 class="page_title">Blog</h1>
+		<hr />
+		<ul class="posts" transition:name="post">
+			{
+				posts.map((post) => (
+					<li class="post">
+						<div class="version_wrapper">
+							<div class="version_info">
+								<a href={`/blog/${post.id}`}>
+									<FormattedDate class="date" date={post.data.date} />
+								</a>
+							</div>
+						</div>
+						<div class="content">
+							<a href={`/blog/${post.id}`}><h2>{post.data.title}</h2></a>
+							<p>{post.data.description}</p>
+						</div>
+					</li>
+				))
+			}
+		</ul>
+	</main>
+</Layout>
+
+```
+
+
+### `src/pages/careers/[slug].astro`
+
+```astro
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/PostLayout.astro';
+
+export async function getStaticPaths() {
+	const posts = await getCollection('careers');
+	return posts.map((post) => ({
+		params: { slug: post.id },
+		props: { post },
+	}));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+// Mock release object to satisfy PostLayout props
+const release = {
+  data: {
+    title: post.data.title,
+    description: post.data.description,
+    date: post.data.date,
+    versionNumber: '',
+    image: { src: '', alt: '' }
+  }
+};
+---
+
+<Layout release={release}>
+	<Content />
+</Layout>
+
+```
+
+
+### `src/pages/careers/index.astro`
+
+```astro
+---
+import { getCollection, render } from 'astro:content';
+import FormattedDate from '../../components/FormattedDate.astro';
+import Layout from '../../layouts/IndexLayout.astro';
+
+const posts = await getCollection('careers');
+posts.sort((a, b) => +b.data.date - +a.data.date);
+---
+
+<Layout title="Careers">
+	<main>
+		<h1 class="page_title">Careers</h1>
+		<hr />
+		<ul class="posts" transition:name="post">
+			{
+				posts.map((post) => (
+					<li class="post">
+						<div class="version_wrapper">
+							<div class="version_info">
+								<a href={`/careers/${post.id}`}>
+									<FormattedDate class="date" date={post.data.date} />
+								</a>
+							</div>
+						</div>
+						<div class="content">
+							<a href={`/careers/${post.id}`}><h2>{post.data.title}</h2></a>
+							<p>{post.data.description}</p>
+						</div>
+					</li>
+				))
+			}
+		</ul>
+	</main>
+</Layout>
+
+```
+
+
+### `src/pages/changelog.astro`
+
+```astro
+---
+import { getCollection, render } from 'astro:content';
+import IndexLayout from '../layouts/IndexLayout.astro';
+import Modal from '../components/Modal.astro';
+
+// ── Data ────────────────────────────────────────────────────
+const allTopics = await getCollection('topics');
+const visibleTopics = allTopics
+  .filter((t) => t.data.visible)
+  .sort((a, b) => a.data.title.localeCompare(b.data.title));
+
+const allEntries = await getCollection('entries');
+
+// Pre-render every entry body server-side
+const renderedEntries = await Promise.all(
+  allEntries.map(async (entry) => {
+    const { Content } = await render(entry);
+    return { entry, Content };
+  })
+);
+
+// Group entries by topic slug, sorted date-descending within each group
+function entriesForTopic(topicId: string) {
+  return renderedEntries
+    .filter(({ entry }) => entry.data.topic === topicId)
+    .sort((a, b) => +b.entry.data.date - +a.entry.data.date);
+}
+
+// ── Badge colours per type ───────────────────────────────────
+const typeBadge: Record<string, string> = {
+  feature:     'bg-green-500/20  text-green-300  ring-green-500/30',
+  fix:         'bg-red-500/20    text-red-300    ring-red-500/30',
+  improvement: 'bg-blue-500/20   text-blue-300   ring-blue-500/30',
+  breaking:    'bg-orange-500/20 text-orange-300 ring-orange-500/30',
+};
+---
+
+<IndexLayout title="Changelog">
+  <main class="py-10 px-4 max-w-4xl mx-auto">
+
+    <h1 class="page_title">Changelog</h1>
+    <hr />
+
+    <!--
+      ── Shared Alpine scope ─────────────────────────────────
+      activeId   : id of the entry whose modal is open ('' = none)
+      modalOpen  : drives the Modal open state via a shared ref
+      show*      : filter toggles, all start true
+    -->
+    <div
+      x-data="{
+        activeId: '',
+        modalOpen: false,
+        showFeature:     true,
+        showFix:         true,
+        showImprovement: true,
+        showBreaking:    true,
+        openEntry(id) {
+          this.activeId  = id;
+          this.modalOpen = true;
+        },
+        bodyHtml(id) {
+          const el = document.getElementById('entry-body-' + id);
+          return el ? el.innerHTML : '';
+        }
+      }"
+    >
+
+      <!-- ── Type filter toggles ─────────────────────────── -->
+      <div class="flex flex-wrap gap-2 mb-8">
+        {(['feature', 'fix', 'improvement', 'breaking'] as const).map((type) => (
+          <button
+            type="button"
+            class:list={[
+              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold',
+              'ring-1 ring-inset transition-opacity duration-150 cursor-pointer',
+              typeBadge[type],
+            ]}
+            x-bind:class={`show${type.charAt(0).toUpperCase() + type.slice(1)} ? 'opacity-100' : 'opacity-30'`}
+            x-on:click={`show${type.charAt(0).toUpperCase() + type.slice(1)} = !show${type.charAt(0).toUpperCase() + type.slice(1)}`}
+          >
+            {type}
+          </button>
+        ))}
+      </div>
+
+      <!-- ── Topic sections ──────────────────────────────── -->
+      {visibleTopics.map((topic) => {
+        const rows = entriesForTopic(topic.id);
+        if (rows.length === 0) return null;
+        return (
+          <section class="mb-12">
+            <h2 class="flex items-center gap-2 text-lg font-bold mb-4 text-white">
+              <span aria-hidden="true">{topic.data.icon}</span>
+              {topic.data.title}
+            </h2>
+
+            <ul class="space-y-3 pl-0 list-none">
+              {rows.map(({ entry }) => (
+                <li
+                  x-show={`show${entry.data.type.charAt(0).toUpperCase() + entry.data.type.slice(1)}`}
+                  x-transition
+                  class="flex items-start gap-3"
+                >
+                  <!-- Type badge -->
+                  <span
+                    class:list={[
+                      'mt-0.5 shrink-0 inline-flex items-center rounded-full px-2 py-0.5',
+                      'text-xs font-semibold ring-1 ring-inset',
+                      typeBadge[entry.data.type],
+                    ]}
+                  >
+                    {entry.data.type}
+                  </span>
+
+                  <!-- Entry title / trigger -->
+                  <div class="min-w-0">
+                    <button
+                      type="button"
+                      class="text-left text-sm font-medium text-white hover:text-purple-300 transition-colors duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400 rounded"
+                      x-on:click={`openEntry('${entry.id}')`}
+                    >
+                      {entry.data.title}
+                    </button>
+                    <p class="mt-0.5 text-xs text-gray-400">{entry.data.summary}</p>
+                  </div>
+
+                  <!-- Date -->
+                  <time
+                    datetime={entry.data.date.toISOString()}
+                    class="ml-auto shrink-0 text-xs text-gray-500 font-mono pt-0.5"
+                  >
+                    {entry.data.date.toLocaleDateString('en-us', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </time>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+
+      <!-- ── Modal (single instance, driven by activeId) ─── -->
+      <div
+        x-data="{ open: false }"
+        x-init="$watch('$root.$data?.modalOpen', v => { open = v })"
+      >
+        <!--
+          We bypass Modal.astro's built-in trigger and wire its
+          internal `open` state from the parent scope instead.
+          The cleanest way: render Modal with no triggerLabel,
+          override open via the parent x-data provide/inject pattern.
+
+          Simpler approach that avoids slot hacks: inline the panel
+          directly, mirroring Modal.astro's panel markup exactly.
+        -->
+        <template x-teleport="body">
+          <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-50 flex items-center justify-center"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="changelog-modal-heading"
+            @keydown.escape.window="open = false; $dispatch('changelog-modal-close')"
+            x-cloak
+          >
+            <!-- Backdrop -->
+            <div
+              class="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              @click="open = false"
+              aria-hidden="true"
+            ></div>
+
+            <!-- Panel -->
+            <div
+              x-show="open"
+              x-transition:enter="transition ease-out duration-200"
+              x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+              x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+              x-transition:leave="transition ease-in duration-150"
+              x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+              x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+              x-trap.noscroll.inert="open"
+              class="relative z-10 w-full max-w-2xl mx-4 rounded-2xl
+                     border border-white/10
+                     bg-gray-900/90 backdrop-blur-xl
+                     shadow-2xl shadow-purple-900/20
+                     ring-1 ring-white/5
+                     max-h-[80vh] flex flex-col"
+            >
+              <!-- Header -->
+              <div class="flex items-center justify-between gap-4 border-b border-white/10 px-6 py-4 shrink-0">
+                <div id="changelog-modal-heading" class="text-base font-semibold text-white"
+                  x-text="document.getElementById('entry-title-' + $data.activeId)?.textContent ?? ''"
+                ></div>
+                <button
+                  type="button"
+                  class="rounded-lg p-1.5 text-gray-400 hover:text-white hover:bg-white/10
+                         transition-colors duration-150
+                         focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  @click="open = false"
+                  aria-label="Close modal"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5">
+                    <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Body: x-html pulls from the hidden pre-rendered div -->
+              <div
+                class="px-6 py-5 text-sm text-gray-300 leading-relaxed overflow-y-auto prose prose-invert prose-sm max-w-none"
+                x-html="bodyHtml(activeId)"
+              ></div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!--
+        ── Hidden pre-rendered entry bodies ──────────────────
+        These are server-rendered at build time; x-html reads
+        their innerHTML at runtime so the modal gets full Markdown.
+      -->
+      <div class="hidden" aria-hidden="true">
+        {renderedEntries.map(({ entry, Content }) => (
+          <>
+            {/* Title anchor for modal header */}
+            <span id={`entry-title-${entry.id}`}>{entry.data.title}</span>
+            {/* Full rendered Markdown body */}
+            <div id={`entry-body-${entry.id}`}>
+              <Content />
+            </div>
+          </>
+        ))}
+      </div>
+
+    </div>{/* end x-data wrapper */}
+  </main>
+</IndexLayout>
+```
+
+
+### `src/pages/docs/[slug].astro`
+
+```astro
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/PostLayout.astro';
+
+export async function getStaticPaths() {
+	const posts = await getCollection('docs');
+	return posts.map((post) => ({
+		params: { slug: post.id },
+		props: { post },
+	}));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+// Mock release object to satisfy PostLayout props
+const release = {
+  data: {
+    title: post.data.title,
+    description: post.data.description,
+    date: post.data.date,
+    versionNumber: '',
+    image: { src: '', alt: '' }
+  }
+};
+---
+
+<Layout release={release}>
+	<Content />
+</Layout>
+
+```
+
+
+### `src/pages/docs/index.astro`
+
+```astro
+---
+import { getCollection, render } from 'astro:content';
+import FormattedDate from '../../components/FormattedDate.astro';
+import Layout from '../../layouts/IndexLayout.astro';
+
+const posts = await getCollection('docs');
+posts.sort((a, b) => +b.data.date - +a.data.date);
+---
+
+<Layout title="Docs">
+	<main>
+		<h1 class="page_title">Docs</h1>
+		<hr />
+		<ul class="posts" transition:name="post">
+			{
+				posts.map((post) => (
+					<li class="post">
+						<div class="version_wrapper">
+							<div class="version_info">
+								<a href={`/docs/${post.id}`}>
+									<FormattedDate class="date" date={post.data.date} />
+								</a>
+							</div>
+						</div>
+						<div class="content">
+							<a href={`/docs/${post.id}`}><h2>{post.data.title}</h2></a>
+							<p>{post.data.description}</p>
+						</div>
+					</li>
+				))
+			}
+		</ul>
+	</main>
+</Layout>
+
+```
+
+
+### `src/pages/guides/[slug].astro`
+
+```astro
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/PostLayout.astro';
+
+export async function getStaticPaths() {
+	const posts = await getCollection('guides');
+	return posts.map((post) => ({
+		params: { slug: post.id },
+		props: { post },
+	}));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+// Mock release object to satisfy PostLayout props
+const release = {
+  data: {
+    title: post.data.title,
+    description: post.data.description,
+    date: post.data.date,
+    versionNumber: '',
+    image: { src: '', alt: '' }
+  }
+};
+---
+
+<Layout release={release}>
+	<Content />
+</Layout>
+
+```
+
+
+### `src/pages/guides/index.astro`
+
+```astro
+---
+import { getCollection, render } from 'astro:content';
+import FormattedDate from '../../components/FormattedDate.astro';
+import Layout from '../../layouts/IndexLayout.astro';
+
+const posts = await getCollection('guides');
+posts.sort((a, b) => +b.data.date - +a.data.date);
+---
+
+<Layout title="Guides">
+	<main>
+		<h1 class="page_title">Guides</h1>
+		<hr />
+		<ul class="posts" transition:name="post">
+			{
+				posts.map((post) => (
+					<li class="post">
+						<div class="version_wrapper">
+							<div class="version_info">
+								<a href={`/guides/${post.id}`}>
+									<FormattedDate class="date" date={post.data.date} />
+								</a>
+							</div>
+						</div>
+						<div class="content">
+							<a href={`/guides/${post.id}`}><h2>{post.data.title}</h2></a>
+							<p>{post.data.description}</p>
+						</div>
+					</li>
+				))
+			}
+		</ul>
+	</main>
+</Layout>
+
+```
+
+
 ### `src/pages/index.astro`
 
 ```astro
@@ -1377,7 +2299,7 @@ posts.sort((a, b) => +b.data.date - +a.data.date);
 
 <Layout>
 	<main>
-		<h1 class="page_title">Changelog</h1>
+		<h1 class="page_title">The Archive</h1>
 		<hr />
 		<ul class="posts" transition:name="post">
 			{
@@ -1403,6 +2325,77 @@ posts.sort((a, b) => +b.data.date - +a.data.date);
 	</main>
 </Layout>
 
+```
+
+
+### `src/pages/mascots/[slug].astro`
+
+```astro
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/PostLayout.astro';
+
+export async function getStaticPaths() {
+  const mascots = await getCollection('mascots');
+  return mascots.map(m => ({ params: { slug: m.id }, props: m }));
+}
+
+const mascot = Astro.props;
+const { Content } = await render(mascot);
+const d = mascot.data;
+---
+<Layout title={d.title}>
+  <header class="mascot-header">
+    <span class="emoji">{d.emoji}</span>
+    <h1>{d.title}</h1>
+    <p class="slogan">"{d.slogan}"</p>
+  </header>
+
+  <!-- THE BASEBALL CARD STAT BLOCK -->
+  <aside class="stat-block">
+    <dl>
+      <dt>Corruption</dt>    <dd>{d.corruption_level ?? '—'}</dd>
+      <dt>Glitch Freq</dt>   <dd>{d.glitch_frequency ?? '—'}</dd>
+      <dt>Rot Affinity</dt>  <dd>{d.rot_affinity ?? '—'}</dd>
+      <dt>Render State</dt>  <dd>{d.render_state ?? '—'}</dd>
+      <dt>Integrity</dt>     <dd>{d.emotional_integrity_buffer ?? '—'}</dd>
+      <dt>Origin</dt>        <dd>{d.origin ?? '—'}</dd>
+      <dt>Lineage</dt>       <dd>{d.mascot_lineage ?? '—'}</dd>
+    </dl>
+    {d.tags && <ul class="tags">{d.tags.map(t => <li>{t}</li>)}</ul>}
+  </aside>
+
+  <article class="mascot-body"><Content /></article>
+</Layout>
+```
+
+
+### `src/pages/mascots/index.astro`
+
+```astro
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/IndexLayout.astro';
+
+const mascots = await getCollection('mascots');
+mascots.sort((a, b) => (a.data.mascot_id ?? 999) - (b.data.mascot_id ?? 999));
+---
+<Layout title="Mascot Roster">
+  <div class="mascot-grid">
+    {mascots.map(m => (
+      <a href={`/mascots/${m.id}`} class="mascot-card">
+        <span class="emoji">{m.data.emoji}</span>
+        <h3>{m.data.title}</h3>
+        <p>{m.data.description}</p>
+        <div class="stats">
+          <span>💀 {m.data.corruption_level ?? '—'}</span>
+          <span>⚡ {m.data.glitch_frequency ?? '—'}</span>
+          <span>🔴 {m.data.render_state ?? '—'}</span>
+        </div>
+      </a>
+    ))}
+  </div>
+</Layout>
 ```
 
 
@@ -1434,6 +2427,162 @@ const { Content } = await render(release);
 ```
 
 
+### `src/pages/showcase/[slug].astro`
+
+```astro
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/PostLayout.astro';
+
+export async function getStaticPaths() {
+	const posts = await getCollection('showcase');
+	return posts.map((post) => ({
+		params: { slug: post.id },
+		props: { post },
+	}));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+// Mock release object to satisfy PostLayout props
+const release = {
+  data: {
+    title: post.data.title,
+    description: post.data.description,
+    date: post.data.date,
+    versionNumber: '',
+    image: { src: '', alt: '' }
+  }
+};
+---
+
+<Layout release={release}>
+	<Content />
+</Layout>
+
+```
+
+
+### `src/pages/showcase/index.astro`
+
+```astro
+---
+import { getCollection, render } from 'astro:content';
+import FormattedDate from '../../components/FormattedDate.astro';
+import Layout from '../../layouts/IndexLayout.astro';
+
+const posts = await getCollection('showcase');
+posts.sort((a, b) => +b.data.date - +a.data.date);
+---
+
+<Layout title="Showcase">
+	<main>
+		<h1 class="page_title">Showcase</h1>
+		<hr />
+		<ul class="posts" transition:name="post">
+			{
+				posts.map((post) => (
+					<li class="post">
+						<div class="version_wrapper">
+							<div class="version_info">
+								<a href={`/showcase/${post.id}`}>
+									<FormattedDate class="date" date={post.data.date} />
+								</a>
+							</div>
+						</div>
+						<div class="content">
+							<a href={`/showcase/${post.id}`}><h2>{post.data.title}</h2></a>
+							<p>{post.data.description}</p>
+						</div>
+					</li>
+				))
+			}
+		</ul>
+	</main>
+</Layout>
+
+```
+
+
+### `src/pages/team/[slug].astro`
+
+```astro
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/PostLayout.astro';
+
+export async function getStaticPaths() {
+	const posts = await getCollection('team');
+	return posts.map((post) => ({
+		params: { slug: post.id },
+		props: { post },
+	}));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+// Mock release object to satisfy PostLayout props
+const release = {
+  data: {
+    title: post.data.title,
+    description: post.data.description,
+    date: post.data.date,
+    versionNumber: '',
+    image: { src: '', alt: '' }
+  }
+};
+---
+
+<Layout release={release}>
+	<Content />
+</Layout>
+
+```
+
+
+### `src/pages/team/index.astro`
+
+```astro
+---
+import { getCollection, render } from 'astro:content';
+import FormattedDate from '../../components/FormattedDate.astro';
+import Layout from '../../layouts/IndexLayout.astro';
+
+const posts = await getCollection('team');
+posts.sort((a, b) => +b.data.date - +a.data.date);
+---
+
+<Layout title="Team">
+	<main>
+		<h1 class="page_title">Team</h1>
+		<hr />
+		<ul class="posts" transition:name="post">
+			{
+				posts.map((post) => (
+					<li class="post">
+						<div class="version_wrapper">
+							<div class="version_info">
+								<a href={`/team/${post.id}`}>
+									<FormattedDate class="date" date={post.data.date} />
+								</a>
+							</div>
+						</div>
+						<div class="content">
+							<a href={`/team/${post.id}`}><h2>{post.data.title}</h2></a>
+							<p>{post.data.description}</p>
+						</div>
+					</li>
+				))
+			}
+		</ul>
+	</main>
+</Layout>
+
+```
+
+
 ### `src/styles/colors.scss`
 
 ```scss
@@ -1460,44 +2609,44 @@ const { Content } = await render(release);
 
 $white: #ffffff;
 $palette: (
-	purple: (
-		50: #f2e8fd,
-		100: #e6d1fa,
-		200: #cfa3f5,
-		300: #ba75f0,
-		400: #a846ec,
-		500: #9818e7,
-		600: #7b13b4,
-		700: #5b0e81,
-		800: #3a084e,
-		900: #15031c,
-		950: #020002,
+	teal: (
+		50: #f0fdfa,
+		100: #ccfbf1,
+		200: #99f6e4,
+		300: #5eead4,
+		400: #2dd4bf,
+		500: #14b8a6,
+		600: #0d9488,
+		700: #0f766e,
+		800: #115e59,
+		900: #134e4a,
+		950: #042f2e,
 	),
-	orange: (
-		50: #fbf0ea,
-		100: #f8e3d9,
-		200: #f2cab7,
-		300: #ecb194,
-		400: #e59872,
-		500: #df7f4f,
-		600: #d05f26,
-		700: #a1491d,
-		800: #713315,
-		900: #421e0c,
-		950: #2a1308,
+	amber: (
+		50: #fffbeb,
+		100: #fef3c7,
+		200: #fde68a,
+		300: #fcd34d,
+		400: #fbbf24,
+		500: #f59e0b,
+		600: #d97706,
+		700: #b45309,
+		800: #92400e,
+		900: #78350f,
+		950: #451a03,
 	),
 	gray: (
-		50: #f6f6f9,
-		100: #e6e7ef,
-		200: #c7c9db,
-		300: #a8abc7,
-		400: #898eb4,
-		500: #6a71a0,
-		600: #545b83,
-		700: #404664,
-		800: #2c3145,
-		900: #181b26,
-		950: #0e1016,
+		50: #f8fafc,
+		100: #f1f5f9,
+		200: #e2e8f0,
+		300: #cbd5e1,
+		400: #94a3b8,
+		500: #64748b,
+		600: #475569,
+		700: #334155,
+		800: #1e293b,
+		900: #0f172a,
+		950: #020617,
 	),
 );
 
@@ -1569,8 +2718,8 @@ body {
 		height: 240px;
 		background: radial-gradient(
 			50% 50% at 50% 50%,
-			rgba(colors.color(orange, 500), 0.2) 0%,
-			rgba(colors.color(orange, 500), 0) 100%
+			rgba(colors.color(teal, 500), 0.2) 0%,
+			rgba(colors.color(teal, 500), 0) 100%
 		);
 		@media (prefers-color-scheme: dark) {
 			background: radial-gradient(
@@ -1583,22 +2732,22 @@ body {
 }
 
 ::selection {
-	background: colors.color(orange, 200);
+	background: colors.color(teal, 200);
 	@media (prefers-color-scheme: dark) {
-		background: colors.color(orange, 600);
+		background: colors.color(teal, 600);
 	}
 }
 
 a,
 a:visited {
-	color: colors.color(orange, 600);
+	color: colors.color(teal, 600);
 	transition: 0.1s ease;
 	@media (prefers-color-scheme: dark) {
-		color: colors.color(orange, 300);
+		color: colors.color(teal, 300);
 	}
 
 	&:hover {
-		color: colors.color(orange, 500);
+		color: colors.color(teal, 500);
 	}
 }
 
@@ -1674,7 +2823,7 @@ nav {
 				top: 0.63em;
 				width: 8px;
 				height: 8px;
-				background: linear-gradient(25deg, colors.color(purple, 500), colors.color(orange, 500));
+				background: linear-gradient(25deg, colors.color(teal, 500), colors.color(amber, 500));
 				border-radius: 99px;
 			}
 		}
@@ -1749,10 +2898,10 @@ nav {
 	color: colors.$white;
 	background: linear-gradient(
 		25deg,
-		colors.color(purple, 800),
-		colors.color(purple, 700),
-		color.mix(colors.color(purple, 500), colors.color(orange, 500)),
-		colors.color(orange, 500)
+		colors.color(teal, 800),
+		colors.color(teal, 700),
+		color.mix(colors.color(teal, 500), colors.color(amber, 500)),
+		colors.color(amber, 500)
 	);
 	border-radius: 8px;
 }

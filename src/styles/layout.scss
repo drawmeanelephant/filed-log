@@ -153,6 +153,35 @@ nav {
 			}
 		}
 	}
+
+	.btn {
+		display: inline-block;
+		padding: 0.5em 1.5em;
+		background: linear-gradient(25deg, colors.color(teal, 600), colors.color(teal, 500));
+		color: colors.$white !important;
+		text-decoration: none;
+		border-radius: 8px;
+		font-weight: 600;
+		transition: transform 0.1s ease, opacity 0.1s ease;
+
+		&:hover {
+			opacity: 0.9;
+			transform: translateY(-1px);
+		}
+
+		&:active {
+			transform: translateY(0);
+		}
+
+		&.btn-secondary {
+			background: colors.color(gray, 200);
+			color: colors.color(gray, 950) !important;
+			@media (prefers-color-scheme: dark) {
+				background: colors.color(gray, 800);
+				color: colors.color(gray, 100) !important;
+			}
+		}
+	}
 }
 
 .page_title {

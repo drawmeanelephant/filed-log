@@ -1,0 +1,39 @@
+---
+import { getCollection, render } from 'astro:content';
+import IndexLayout from '../../layouts/IndexLayout.astro';
+
+export async function getStaticPaths() {
+  const mascots = await getCollection('mascots');
+  return mascots.map(m => ({ params: { slug: m.id }, props: m }));
+}
+
+const mascot = Astro.props;
+const { Content } = await render(mascot);
+const d = mascot.data;
+---
+<IndexLayout title={d.title}>
+  <main class="post single">
+    <div class="versionwrapper">
+      <div class="versioninfo">
+        <span class="emoji">{d.emoji}</span>
+        <h1>{d.title}</h1>
+        {d.slogan && <p class="slogan">"{d.slogan}"</p>}
+      </div>
+    </div>
+
+    <aside class="stat-block">
+      <dl>
+        <dt>Corruption</dt>    <dd>{d.corruption_level ?? '—'}</dd>
+        <dt>Glitch Freq</dt>   <dd>{d.glitch_frequency ?? '—'}</dd>
+        <dt>Rot Affinity</dt>  <dd>{d.rot_affinity ?? '—'}</dd>
+        <dt>Render State</dt>  <dd>{d.render_state ?? '—'}</dd>
+        <dt>Integrity</dt>     <dd>{d.emotional_integrity_buffer ?? '—'}</dd>
+        <dt>Origin</dt>        <dd>{d.origin ?? '—'}</dd>
+        <dt>Lineage</dt>       <dd>{d.mascot_lineage ?? '—'}</dd>
+      </dl>
+      {d.tags && <ul class="tags">{d.tags.map(t => <li>{t}</li>)}</ul>}
+    </aside>
+
+    <article class="mascot-body"><Content /></article>
+  </main>
+</IndexLayout>

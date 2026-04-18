@@ -1,0 +1,23 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/IndexLayout.astro';
+
+const mascots = await getCollection('mascots');
+mascots.sort((a, b) => (a.data.mascot_id ?? 999) - (b.data.mascot_id ?? 999));
+---
+<Layout title="Mascot Roster">
+  <div class="mascot-grid">
+    {mascots.map(m => (
+      <a href={`/mascots/${m.id}`} class="mascot-card">
+        <span class="emoji">{m.data.emoji}</span>
+        <h3>{m.data.title}</h3>
+        <p>{m.data.description}</p>
+        <div class="stats">
+          <span>💀 {m.data.corruption_level ?? '—'}</span>
+          <span>⚡ {m.data.glitch_frequency ?? '—'}</span>
+          <span>🔴 {m.data.render_state ?? '—'}</span>
+        </div>
+      </a>
+    ))}
+  </div>
+</Layout>
