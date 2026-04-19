@@ -1,23 +1,77 @@
 ---
 import { getCollection } from 'astro:content';
-import Layout from '../../layouts/IndexLayout.astro';
+import IndexLayout from '../../layouts/IndexLayout.astro';
 
 const mascots = await getCollection('mascots');
-mascots.sort((a, b) => (a.data.mascot_id ?? 999) - (b.data.mascot_id ?? 999));
+mascots.sort((a, b) => {
+  const idA = a.data.mascot_id ?? Infinity;
+  const idB = b.data.mascot_id ?? Infinity;
+  return idA - idB;
+});
 ---
-<Layout title="Mascot Roster">
-  <div class="mascot-grid">
-    {mascots.map(m => (
-      <a href={`/mascots/${m.id}`} class="mascot-card">
-        <span class="emoji">{m.data.emoji}</span>
-        <h3>{m.data.title}</h3>
-        <p>{m.data.description}</p>
-        <div class="stats">
-          <span>💀 {m.data.corruption_level ?? '—'}</span>
-          <span>⚡ {m.data.glitch_frequency ?? '—'}</span>
-          <span>🔴 {m.data.render_state ?? '—'}</span>
-        </div>
-      </a>
-    ))}
+
+<IndexLayout title="Mascot Roster">
+  <div class="post single">
+    <div class="content w-full px-4 md:px-8">
+      <header class="mb-12">
+        <h1 class="pagetitle text-5xl font-extrabold mb-4 bg-gradient-to-r from-teal-500 to-amber-500 bg-clip-text text-transparent">
+          Mascot Roster
+        </h1>
+        <p class="text-xl opacity-60">The complete registry of digital manifestations and archival rot spirits.</p>
+      </header>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {mascots.map((m) => (
+          <a
+            href={`/mascots/${m.id}`}
+            class="group flex flex-col p-8 rounded-3xl bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 hover:border-teal-500/50 transition-all duration-500 hover:-translate-y-2 shadow-sm hover:shadow-2xl hover:shadow-teal-500/10 no-underline"
+          >
+            <div class="flex items-start justify-between mb-8">
+              <span class="text-6xl group-hover:scale-125 transition-transform duration-500 ease-out drop-shadow-sm">
+                {m.data.emoji ?? '🤖'}
+              </span>
+              <span class="text-[10px] font-mono opacity-30 tracking-tighter uppercase">
+                ID {String(m.data.mascot_id ?? '???').padStart(3, '0')}
+              </span>
+            </div>
+
+            <h2 class="text-2xl font-black mb-2 group-hover:text-teal-500 transition-colors duration-300 tracking-tight">
+              {m.data.title}
+            </h2>
+
+            {m.data.slogan && (
+              <p class="text-sm italic opacity-50 mb-4 font-serif leading-relaxed">
+                {m.data.slogan}
+              </p>
+            )}
+
+            <p class="text-sm opacity-70 mb-8 line-clamp-3 flex-grow leading-relaxed">
+              {m.data.description ?? m.data.summary ?? ''}
+            </p>
+
+            <div class="grid grid-cols-3 gap-2 pt-6 border-t border-gray-100 dark:border-gray-900">
+              {m.data.corruption_level && (
+                <div class="flex flex-col">
+                  <span class="text-[9px] uppercase tracking-widest opacity-40 font-bold mb-1">Corruption</span>
+                  <span class="text-[11px] font-mono font-bold truncate">{m.data.corruption_level}</span>
+                </div>
+              )}
+              {m.data.glitch_frequency && (
+                <div class="flex flex-col">
+                  <span class="text-[9px] uppercase tracking-widest opacity-40 font-bold mb-1">Glitch</span>
+                  <span class="text-[11px] font-mono font-bold truncate">{m.data.glitch_frequency}</span>
+                </div>
+              )}
+              {m.data.render_state && (
+                <div class="flex flex-col">
+                  <span class="text-[9px] uppercase tracking-widest opacity-40 font-bold mb-1">Render</span>
+                  <span class="text-[11px] font-mono font-bold truncate">{m.data.render_state}</span>
+                </div>
+              )}
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
   </div>
-</Layout>
+</IndexLayout>

@@ -1,12 +1,12 @@
 ---
 title: "node_modules Directory: filed-log"
-generated: "2026-04-17T22:16:45Z"
+generated: "2026-04-19T19:27:35Z"
 description: "Top-level package listing from node_modules."
 ---
 
 # node_modules: `filed-log`
 
-> Generated: 2026-04-17T22:16:45Z
+> Generated: 2026-04-19T19:27:35Z
 
 ---
 
@@ -14,9 +14,9 @@ description: "Top-level package listing from node_modules."
 
 | Stat | Count |
 |---|---|
-| Total top-level entries | 248 |
+| Total top-level entries | 252 |
 | Flat packages | 231 |
-| Scoped namespaces | 17 |
+| Scoped namespaces | 21 |
 
 ---
 
@@ -30,7 +30,7 @@ description: "Top-level package listing from node_modules."
 - **`argparse`** `2.0.1` — CLI arguments parser. Native port of python's argparse.
 - **`aria-query`** `5.3.2` — Programmatic access to the ARIA specification
 - **`array-iterate`** `2.0.1` — `Array#forEach()` but it’s possible to define where to move to next
-- **`astro`** `6.1.7` — Astro is a modern site builder with web best practices, performance, and DX fron
+- **`astro`** `6.1.8` — Astro is a modern site builder with web best practices, performance, and DX fron
 - **`axobject-query`** `4.1.0` — Programmatic access to information about the AXObject Model
 - **`bail`** `2.0.2` — Throw a given error
 - **`boolbase`** `1.0.0` — two functions: One that returns true, one that returns false
@@ -82,7 +82,6 @@ description: "Top-level package listing from node_modules."
 - **`focus-trap`** `8.0.1` — Trap focus within a DOM node.
 - **`fontace`** `0.4.1` — Extract useful information from font files
 - **`fontkitten`** `1.0.3` — A lightweight font data library — fontkit’s little sibling
-- **`fsevents`** `2.3.3` — Native Access to MacOS FSEvents
 - **`github-slugger`** `2.0.0` — Generate a slug just like GitHub does for markdown headings.
 - **`graceful-fs`** `4.2.11` — A drop-in replacement for fs, making various improvements.
 - **`h3`** `1.15.11` — Minimal H(TTP) framework built for high performance and portability.
@@ -101,7 +100,7 @@ description: "Top-level package listing from node_modules."
 - **`http-cache-semantics`** `4.2.0` — Parses Cache-Control and other headers. Helps building correct HTTP caches and p
 - **`immutable`** `5.1.5` — Immutable Data Collections
 - **`iron-webcrypto`** `1.2.1` — a cryptographic utility for sealing-unsealing a JSON object using symmetric key 
-- **`is-docker`** `3.0.0` — Check if the process is running inside a Docker container
+- **`is-docker`** `4.0.0` — Check if the process is running inside a Docker container
 - **`is-extglob`** `2.1.1` — Returns true if a string has an extglob.
 - **`is-glob`** `4.0.3` — Returns `true` if the given string looks like a glob pattern or an extglob patte
 - **`is-inside-container`** `1.0.0` — Check if the process is running inside a container (Docker/Podman)
@@ -203,7 +202,8 @@ description: "Top-level package listing from node_modules."
 - **`retext-latin`** `4.0.0` — retext plugin to parse Latin-script prose
 - **`retext-smartypants`** `6.2.0` — retext plugin to implement SmartyPants
 - **`retext-stringify`** `4.0.0` — retext plugin to serialize prose
-- **`rollup`** `4.60.1` — Next-generation ES module bundler
+- **`rolldown`** `1.0.0-rc.15` — Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.
+- **`rollup`** `4.60.2` — Next-generation ES module bundler
 - **`sass`** `1.99.0` — A pure JavaScript implementation of Sass.
 - **`sax`** `1.6.0` — An evented streaming XML parser in JavaScript
 - **`semver`** `7.7.4` — The semantic version parser used by npm.
@@ -244,7 +244,7 @@ description: "Top-level package listing from node_modules."
 - **`vfile`** `6.0.3` — Virtual file format for text processing
 - **`vfile-location`** `5.0.3` — vfile utility to convert between positional (line and column-based) and offset (
 - **`vfile-message`** `4.0.3` — vfile utility to create a virtual message
-- **`vite`** `7.3.2` — Native-ESM powered web dev build tool
+- **`vite`** `8.0.8` — Native-ESM powered web dev build tool
 - **`vitefu`** `1.1.3` — Utilities for building frameworks with Vite
 - **`web-namespaces`** `2.0.1` — Map of web namespaces
 - **`which-pm-runs`** `1.1.0` — Detects what package manager executes the process
@@ -269,7 +269,7 @@ description: "Top-level package listing from node_modules."
 - **`@astrojs/internal-helpers`** `0.8.0` — Internal helpers used by core Astro packages.
 - **`@astrojs/markdown-remark`** `7.1.0` — *(no description)*
 - **`@astrojs/prism`** `4.0.1` — Add Prism syntax highlighting support to your Astro site
-- **`@astrojs/telemetry`** `3.3.0` — *(no description)*
+- **`@astrojs/telemetry`** `3.3.1` — *(no description)*
 
 ### `@babel`
 
@@ -289,7 +289,9 @@ description: "Top-level package listing from node_modules."
 
 ### `@emnapi`
 
+- **`@emnapi/core`** `1.9.2` — emnapi core
 - **`@emnapi/runtime`** `1.10.0` — emnapi runtime
+- **`@emnapi/wasi-threads`** `1.2.1` — WASI threads proposal implementation in JavaScript
 
 ### `@esbuild`
 
@@ -309,19 +311,32 @@ description: "Top-level package listing from node_modules."
 - **`@jridgewell/sourcemap-codec`** `1.5.5` — Encode/decode sourcemap mappings
 - **`@jridgewell/trace-mapping`** `0.3.31` — Trace the original position through a source map
 
+### `@napi-rs`
+
+- **`@napi-rs/wasm-runtime`** `1.1.4` — Runtime and polyfill for wasm targets
+
 ### `@oslojs`
 
 - **`@oslojs/encoding`** `1.1.0` — Runtime-agnostic library for encoding and decoding data
+
+### `@oxc-project`
+
+- **`@oxc-project/types`** `0.124.0` — Types for Oxc AST nodes
 
 ### `@parcel`
 
 - **`@parcel/watcher`** `2.5.6` — A native C++ Node module for querying and subscribing to filesystem events. Used
 - **`@parcel/watcher-darwin-arm64`** `2.5.6` — A native C++ Node module for querying and subscribing to filesystem events. Used
 
+### `@rolldown`
+
+- **`@rolldown/binding-darwin-arm64`** `1.0.0-rc.15` — Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.
+- **`@rolldown/pluginutils`** `1.0.0-rc.15` — *(no description)*
+
 ### `@rollup`
 
 - **`@rollup/pluginutils`** `5.3.0` — A set of utility functions commonly used by Rollup plugins
-- **`@rollup/rollup-darwin-arm64`** `4.60.1` — Native bindings for Rollup
+- **`@rollup/rollup-darwin-arm64`** `4.60.2` — Native bindings for Rollup
 
 ### `@shikijs`
 
@@ -340,6 +355,10 @@ description: "Top-level package listing from node_modules."
 - **`@tailwindcss/oxide`** `4.2.2` — *(no description)*
 - **`@tailwindcss/oxide-darwin-arm64`** `4.2.2` — *(no description)*
 - **`@tailwindcss/vite`** `4.2.2` — A utility-first CSS framework for rapidly building custom user interfaces.
+
+### `@tybys`
+
+- **`@tybys/wasm-util`** `0.10.1` — WASI polyfill for browser and some wasm util
 
 ### `@types`
 

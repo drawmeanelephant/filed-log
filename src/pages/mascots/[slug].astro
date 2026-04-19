@@ -4,36 +4,253 @@ import IndexLayout from '../../layouts/IndexLayout.astro';
 
 export async function getStaticPaths() {
   const mascots = await getCollection('mascots');
-  return mascots.map(m => ({ params: { slug: m.id }, props: m }));
+  return mascots.map((m) => ({
+    params: { slug: m.id },
+    props: m,
+  }));
 }
 
 const mascot = Astro.props;
 const { Content } = await render(mascot);
 const d = mascot.data;
+
+// Normalize string-or-array fields to always be arrays
+const toList = (v: unknown): string[] => {
+  if (!v) return [];
+  if (Array.isArray(v)) return v as string[];
+  return [v as string];
+};
+
+const failures     = toList(d.known_failures);
+const tasks        = toList(d.ceremonial_tasks);
+const proficiencies = toList(d.proficiencies);
+const savingThrows = toList(d.saving_throws);
+const tags         = toList(d.tags);
+const haikus       = toList(d.haiku_log as unknown);
+
+// Dual-name field resolution
+const integrity  = d.emotional_integrity_buffer ?? d.emotional_integrity ?? null;
+const recursion  = d.recursion_depth ?? d.recorsion_depth ?? null;
+
+// Stat grid — only rows with a truthy value are shown
+const stats = [
+  { label: 'Corruption',        value: d.corruption_level },
+  { label: 'Glitch Freq',       value: d.glitch_frequency },
+  { label: 'Rot Affinity',      value: d.rot_affinity },
+  { label: 'Render State',      value: d.render_state },
+  { label: 'Integrity',         value: integrity },
+  { label: 'Rot Integrity',     value: d.rot_integrity },
+  { label: 'Rot Status',        value: d.rot_status },
+  { label: 'Volatility',        value: d.mascot_volatility },
+  { label: 'Obstinacy',         value: d.obstinacy },
+  { label: 'Clarity',           value: d.clarity },
+  { label: 'Aura',              value: d.aura_of_authority },
+  { label: 'Spec Compliance',   value: d.spec_compliance },
+  { label: 'Recursion',         value: recursion },
+  { label: 'Meltdown',          value: d.meltdown_integration },
+  { label: 'Final Form',        value: d.final_form },
+  { label: 'Emotional Leakage', value: d.emotional_leakage },
+].filter((s) => s.value !== null && s.value !== undefined && s.value !== '');
+
+// Lore rows — only rows with a truthy value
+const lore = [
+  { label: 'Origin',              value: d.origin },
+  { label: 'Manifested By',       value: d.manifested_by },
+  { label: 'Mascot Lineage',      value: d.mascot_lineage },
+  { label: 'System Affiliation',  value: d.system_affiliation },
+  { label: 'Breeding Program',    value: d.breeding_program },
+].filter((l) => l.value !== null && l.value !== undefined && l.value !== '');
+
+// D&D stats — only if dnd_stats is a plain object with at least one key
+const dndRaw = d.dnd_stats as Record<string, unknown> | undefined;
+const dndKeys = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const;
+const hasDnd =
+  dndRaw !== null &&
+  dndRaw !== undefined &&
+  typeof dndRaw === 'object' &&
+  !Array.isArray(dndRaw) &&
+  dndKeys.some((k) => dndRaw[k] !== undefined);
 ---
+
 <IndexLayout title={d.title}>
   <main class="post single">
     <div class="versionwrapper">
       <div class="versioninfo">
-        <span class="emoji">{d.emoji}</span>
-        <h1>{d.title}</h1>
-        {d.slogan && <p class="slogan">"{d.slogan}"</p>}
-      </div>
-    </div>
 
-    <aside class="stat-block">
-      <dl>
-        <dt>Corruption</dt>    <dd>{d.corruption_level ?? '—'}</dd>
-        <dt>Glitch Freq</dt>   <dd>{d.glitch_frequency ?? '—'}</dd>
-        <dt>Rot Affinity</dt>  <dd>{d.rot_affinity ?? '—'}</dd>
-        <dt>Render State</dt>  <dd>{d.render_state ?? '—'}</dd>
-        <dt>Integrity</dt>     <dd>{d.emotional_integrity_buffer ?? '—'}</dd>
-        <dt>Origin</dt>        <dd>{d.origin ?? '—'}</dd>
-        <dt>Lineage</dt>       <dd>{d.mascot_lineage ?? '—'}</dd>
-      </dl>
-      {d.tags && <ul class="tags">{d.tags.map(t => <li>{t}</li>)}</ul>}
-    </aside>
+        {/* ── HEADER ── */}
+        <div class="mb-8">
+          {d.emoji && (
+            <div class="text-7xl mb-4 drop-shadow-lg">{d.emoji}</div>
+          )}
+          <h1 class="text-4xl font-black tracking-tight mb-2 leading-tight">{d.title}</h1>
+          {d.slogan && (
+            <p class="text-lg italic opacity-50 font-serif mb-4">{d.slogan}</p>
+          )}
+          <div class="flex flex-wrap gap-2 mt-4">
+            {d.status && (
+              <span class="px-2 py-0.5 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                {d.status}
+              </span>
+            )}
+            {d.render_state && (
+              <span class="px-2 py-0.5 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                {d.render_state}
+              </span>
+            )}
+          </div>
+        </div>
 
-    <article class="mascot-body"><Content /></article>
+      </div>{/* /versioninfo */}
+    </div>{/* /versionwrapper */}
+
+    <div class="content">
+
+      {/* ── STAT GRID ── */}
+      {stats.length > 0 && (
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-12 mb-16 p-10 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-3xl">
+          {stats.map((s) => (
+            <div class="flex flex-col">
+              <span class="text-[10px] uppercase tracking-[0.2em] font-bold opacity-30 mb-2">{s.label}</span>
+              <span class="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-100">{s.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── LORE BLOCK ── */}
+      {lore.length > 0 && (
+        <section class="mb-16">
+          <h2 class="text-xs uppercase tracking-[0.2em] font-black opacity-40 mb-6">Lore</h2>
+          <dl class="space-y-4">
+            {lore.map((l) => (
+              <div class="flex flex-col sm:flex-row sm:gap-8">
+                <dt class="text-[11px] uppercase tracking-widest opacity-40 font-bold w-40 shrink-0 pt-0.5">{l.label}</dt>
+                <dd class="text-sm opacity-80">{l.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+
+      {/* ── D&D STATS ── */}
+      {hasDnd && (
+        <section class="mb-16">
+          <h2 class="text-xs uppercase tracking-[0.2em] font-black opacity-40 mb-6">D&amp;D Stats</h2>
+          <div class="flex flex-wrap gap-4">
+            {dndKeys.map((k) =>
+              dndRaw![k] !== undefined ? (
+                <div class="flex flex-col items-center px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 min-w-[64px]">
+                  <span class="text-[10px] uppercase tracking-widest font-black opacity-40 mb-1">{k.toUpperCase()}</span>
+                  <span class="text-lg font-black">{String(dndRaw![k])}</span>
+                </div>
+              ) : null
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ── TAGS ── */}
+      {tags.length > 0 && (
+        <div class="flex flex-wrap gap-2 mb-16">
+          {tags.map((t) => (
+            <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-[10px] font-mono rounded uppercase tracking-wider border border-gray-200 dark:border-gray-700 opacity-60">
+              {t}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* ── KNOWN FAILURES ── */}
+      {failures.length > 0 && (
+        <section class="mb-12 p-8 bg-red-500/5 border border-red-500/10 rounded-2xl">
+          <h2 class="text-red-600 dark:text-red-400 text-xs uppercase tracking-[0.2em] font-black mb-6 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+            Known Failures
+          </h2>
+          <ul class="space-y-3 list-none p-0 m-0">
+            {failures.map((f) => (
+              <li class="flex gap-3 text-sm opacity-80 leading-relaxed">
+                <span class="text-red-500 font-bold shrink-0">—</span>
+                {f}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* ── CEREMONIAL TASKS ── */}
+      {tasks.length > 0 && (
+        <section class="mb-12 p-8 bg-teal-500/5 border border-teal-500/10 rounded-2xl">
+          <h2 class="text-teal-600 dark:text-teal-400 text-xs uppercase tracking-[0.2em] font-black mb-6 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+            Ceremonial Tasks
+          </h2>
+          <ul class="space-y-3 list-none p-0 m-0">
+            {tasks.map((t) => (
+              <li class="flex gap-3 text-sm opacity-80 leading-relaxed">
+                <span class="text-teal-500 font-bold shrink-0">◆</span>
+                {t}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* ── PROFICIENCIES ── */}
+      {proficiencies.length > 0 && (
+        <section class="mb-12 p-8 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
+          <h2 class="text-blue-600 dark:text-blue-400 text-xs uppercase tracking-[0.2em] font-black mb-6 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            Proficiencies
+          </h2>
+          <ul class="space-y-3 list-none p-0 m-0">
+            {proficiencies.map((p) => (
+              <li class="flex gap-3 text-sm opacity-80 leading-relaxed">
+                <span class="text-blue-500 font-bold shrink-0">+</span>
+                {p}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* ── SAVING THROWS ── */}
+      {savingThrows.length > 0 && (
+        <section class="mb-12 p-8 bg-purple-500/5 border border-purple-500/10 rounded-2xl">
+          <h2 class="text-purple-600 dark:text-purple-400 text-xs uppercase tracking-[0.2em] font-black mb-6 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+            Saving Throws
+          </h2>
+          <ul class="space-y-3 list-none p-0 m-0">
+            {savingThrows.map((s) => (
+              <li class="flex gap-3 text-sm opacity-80 leading-relaxed">
+                <span class="text-purple-500 font-bold shrink-0">✦</span>
+                {s}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* ── HAIKU LOG ── */}
+      {haikus.length > 0 && (
+        <section class="mb-16">
+          <h2 class="text-xs uppercase tracking-[0.2em] font-black opacity-40 mb-6">Haiku Log</h2>
+          <div class="space-y-6">
+            {haikus.map((h) => (
+              <blockquote class="border-l-2 border-teal-500/40 pl-6 italic text-sm opacity-70 font-serif leading-relaxed whitespace-pre-line">
+                {h}
+              </blockquote>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── MARKDOWN BODY ── */}
+      <article class="prose dark:prose-invert max-w-none prose-headings:font-black prose-headings:tracking-tight prose-a:text-teal-500">
+        <Content />
+      </article>
+
+    </div>{/* /content */}
   </main>
 </IndexLayout>
